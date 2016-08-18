@@ -60,7 +60,10 @@ def post_webhook():
 
 def reply_with_selfie_drafts(recipient_id, img):
     badge = Image.open('assets/vdb_badge.png')
-    img.paste(badge, (0, 0), badge)
+    badge.thumbnail(img.size)
+
+    # pasting badge on bottom right edge
+    img.paste(badge, (img.size[0] - badge.size[0], img.size[1] - badge.size[1]), badge)
 
     tempFileObj = NamedTemporaryFile(mode='w+b',suffix='jpg')
     img.save('/tmp/tmpselfie', img.format)

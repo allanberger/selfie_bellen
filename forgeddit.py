@@ -97,7 +97,7 @@ MESSAGE_WITH_IMAGE = {
       {
         "type": "image",
         "payload": {
-          "url": "https://scontent.xx.fbcdn.net/v/t35.0-12/14045457_1430017397015062_622059024_o.jpg?_nc_ad=z-m&oh=a35554e821dfc0ec310605aa2eecea2f&oe=57B82967"
+          "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/Red_Apple.jpg"
         }
       }
     ]
