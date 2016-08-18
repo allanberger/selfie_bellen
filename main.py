@@ -53,7 +53,6 @@ def post_webhook():
                         image = "http://cdn.shopify.com/s/files/1/0080/8372/products/tattly_jen_mussari_hello_script_web_design_01_grande.jpg"
                         element = create_generic_template_element("Hello", image, message_text)
                         reply_with_generic_template(sender_id, [element])
-
                         #do_rules(sender_id, message_text)
 
     return "ok", 200
@@ -66,70 +65,24 @@ def reply_with_selfie_drafts(recipient_id, img):
     img.paste(badge, (img.size[0] - badge.size[0], img.size[1] - badge.size[1]), badge)
 
     tempFileObj = NamedTemporaryFile(mode='w+b',suffix='jpg')
-    img.save('/tmp/tmpselfie', img.format)
     img.save(tempFileObj, img.format, quality=100)
-    # copyfileobj(img, tempFileObj)
 
-    buffer = cStringIO.StringIO()
-
-    img.save(buffer, img.format, quality=100)
     tempFileObj.seek(0)
-
-    # output = io.BytesIO()
-    # img.save(output, format='jpeg')
 
     params = {
         "access_token": access_token
     }
 
-    headers = {
-        "Content-Type": "application/json"
-    }
-
     data = {
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "attachment": {
-                "type": "image",
-                "payload": {}
-            }
-        }
+        "recipient[id]": recipient_id,
+        "message[attachment][type]": "image",
+        "message[attachment][payload][]": ""
     }
-
-    # files = {
-    #     "recipient": {
-    #         "id": recipient_id
-    #     },
-    #     "message": {
-    #         "attachment": {
-    #             "type": "image",
-    #             "payload": {}
-    #         }
-    #     },
-    #     'imgdata': tempFileObj
-    # }
     print "################# PRINTING SEND_IMAGE_DATA data"
-    # print data
+
 
     url = "https://graph.facebook.com/v2.6/me/messages?" + urllib.urlencode(params)
-    files = {
-        "filedata": tempFileObj,
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "type": "image",
-            "payload": {}
-        }
-    }
-    r = requests.Request('POST', url=url, files=files, data=data)
-    prep = r.prepare()
-    pretty_print_POST(prep)
-
-
-    r = requests.post(url=url, files=tempFileObj, data=data)
+    r = requests.post(url=url, files={'filedata': tempFileObj.read()}, data=data)
 
     print r.text
 
