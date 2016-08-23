@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-import json, urllib, requests, tempfile, os
+import json, urllib, requests, tempfile, os, uuid
 from flask import Flask, request, abort, send_from_directory
 from PIL import Image
 from StringIO import StringIO
 
+# required to post an image to facebook
 from poster.encode import multipart_encode, MultipartParam
 from poster.streaminghttp import register_openers
 import urllib2
@@ -70,11 +71,8 @@ def reply_with_selfie_drafts(recipient_id, img):
               (img.size[0] - badge.size[0], img.size[1] - badge.size[1]),
               badge)
 
-    (temp_filedescriptor, temp_filepath) = tempfile.mkstemp(suffix='.jpg')
-    os.close(temp_filedescriptor)
-    temp_file = open(temp_filepath, 'w+b')
-    img.save(temp_file, 'jpeg', quality=100)
-    temp_file.close()
+    temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.jpg'
+    img.save(temp_img_path)
 
     params = {
         "access_token": access_token
