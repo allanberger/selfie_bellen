@@ -8,17 +8,29 @@ from StringIO import StringIO
 from poster.encode import multipart_encode, MultipartParam
 from poster.streaminghttp import register_openers
 import urllib2
+from pymessenger.bot import Bot
+from pymessenger import Element, Button
 
 register_openers()
 
 app = Flask(__name__)
 
 access_token = 'EAAPlE5lfeCwBADurnmtjJWiXFxZBImpdZAPTi1hb9ZAJzxhjoZBy2lfXMEmTBWLWZA6ytpXnTsSHvPJN9OD9wxaPdXmLDjehGI6DhSCpxqzQM240Wx645elKeB2TB2p7PCFB3nKTDwirclZCZBZAawFoIoRiuj5u3OLdUPk5ivnyjwZDZD'
+bot = Bot(access_token)
+server_url = "https://b118db1f.ngrok.io"
+
+DB_FILE = "data.json"
+with open(DB_FILE) as data_file:
+  user_db = json.load(data_file)
+
+TEMPLATES = [
+    "vdb_badge1", "vdb_badge2", "vdb_badge3",
+]
 
 
-# @app.route('/assets/<path:path>')
-# def send_assets(path):
-#     return send_from_directory('assets', path)
+@app.route('/assets/<path:path>')
+def send_assets(path):
+    return send_from_directory('assets', path)
 
 @app.route("/", methods=["GET"])
 def root():
@@ -37,7 +49,7 @@ def get_webhook():
 @app.route('/webhook', methods=['POST'])
 def post_webhook():
     data = request.json
-    print "################# PRINTING INCOMING DATA"
+    print "################# INCOMING DATA"
     print data
     if data["object"] == "page":
         for entry in data['entry']:
@@ -46,6 +58,15 @@ def post_webhook():
                 if "message" in messaging_event:
 
                     sender_id = messaging_event['sender']['id']
+
+                    if sender_id not in user_db:
+                      user_db[sender_id] = {
+                        "status": "NEW",
+                        "template": "vdb_badge1"
+                      }
+                    save_db()
+
+
                     if 'attachments' in messaging_event['message']:
                         if messaging_event['message']['attachments'][0]['type'] == 'image':
                             url = messaging_event['message']['attachments'][0]['payload']['url']
@@ -55,15 +76,40 @@ def post_webhook():
 
                     if 'text' in messaging_event['message']:
                         message_text = messaging_event['message']['text']
-                        image = "http://cdn.shopify.com/s/files/1/0080/8372/products/tattly_jen_mussari_hello_script_web_design_01_grande.jpg"
-                        element = create_generic_template_element("Hello", image, message_text)
-                        reply_with_generic_template(sender_id, [element])
-                        #do_rules(sender_id, message_text)
+                        send_templates(sender_id)
+
+                if "postback" in messaging_event:
+                    sender_id = messaging_event['sender']['id']
+                    postback = messaging_event['postback']['payload']
+                    received_postback(sender_id, postback)
 
     return "ok", 200
 
+def received_postback(sender_id, postback):
+    print "GOT POSTBACK: " + postback
+    user_db[sender_id]["template"] = postback
+    bot.send_text_message(sender_id, "Vorlage gewählt :)")
+    # if 'GETTING_STARTED' in postback:
+        # bot.send_text_message(sender_id,"Hi! Schick mir einen Selfie :)")
+
+def send_templates(recipient_id):
+    templates = []
+
+    for temp in TEMPLATES:
+        templates.append(Element(
+            title="Vorlage",
+            image_url=asset_url(temp + "_preview.jpg"),
+            subtitle="Vorlage",
+            buttons=[Button({
+                "type": "postback",
+                "title": "Vorlage wählen",
+                "payload": temp
+            })]
+        ))
+
+    bot.send_generic_message(recipient_id, templates)
 def reply_with_selfie_drafts(recipient_id, img):
-    badge = Image.open('assets/vdb_badge.png')
+    badge = Image.open("assets/" + user_db[recipient_id]["template"] + ".png")
     badge.thumbnail(img.size)
 
     # pasting badge on bottom right edge
@@ -72,7 +118,7 @@ def reply_with_selfie_drafts(recipient_id, img):
               badge)
 
     temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.jpg'
-    img.save(temp_img_path)
+    img.save(temp_filepath)
 
     params = {
         "access_token": access_token
@@ -95,6 +141,7 @@ def reply_with_selfie_drafts(recipient_id, img):
     request = urllib2.Request(url, datagen, headers)
     print "#### REQUEST"
     response = urllib2.urlopen(request)
+
     print response.read()
     os.remove(temp_filepath)
 
@@ -165,3 +212,10 @@ def create_generic_template_element(title, image_url, subtitle):
         "image_url": image_url,
         "subtitle": subtitle
     }
+
+def save_db():
+  with open('data.json', 'w') as data_file:
+    json.dump(user_db, data_file)
+
+def asset_url(asset):
+    return server_url + "/assets/" + asset
