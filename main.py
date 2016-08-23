@@ -17,7 +17,7 @@ app = Flask(__name__)
 
 access_token = 'EAAPlE5lfeCwBADurnmtjJWiXFxZBImpdZAPTi1hb9ZAJzxhjoZBy2lfXMEmTBWLWZA6ytpXnTsSHvPJN9OD9wxaPdXmLDjehGI6DhSCpxqzQM240Wx645elKeB2TB2p7PCFB3nKTDwirclZCZBZAawFoIoRiuj5u3OLdUPk5ivnyjwZDZD'
 bot = Bot(access_token)
-server_url = "https://b118db1f.ngrok.io"
+server_url = "INSERT_SERVER_URL" # INSERT SERVER URL HERE
 
 DB_FILE = "data.json"
 with open(DB_FILE) as data_file:
