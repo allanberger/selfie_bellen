@@ -1,6 +1,6 @@
 import requests
 import json, urllib
-
+from pprint import pprint
 
 SERVER_URL = "http://localhost:5000/webhook"
 USER_ID = '1060373100711229'
@@ -18,8 +18,7 @@ def send_image():
   payload = MESSAGE_WITH_IMAGE.copy()
   payload['sender']['id'] = msg['entry'][0]['id']
   # payload['recipient']['id'] = msg['entry'][0]['id']
-  msg['entry'][0]['messaging'].append(payload)
-
+  msg['entry'][0]['messaging'] = [payload]
   requests.post(url=SERVER_URL, headers=HEADERS, data=json.dumps(msg))
 
 def send_message(text_message = ""):
