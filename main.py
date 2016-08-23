@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
-import json, urllib, requests, io
-from flask import Flask, request, abort
+import json, urllib, requests, tempfile, os, uuid
+from flask import Flask, request, abort, send_from_directory
 from PIL import Image
 from StringIO import StringIO
-from tempfile import NamedTemporaryFile
-from shutil import copyfileobj
-import base64
-import cStringIO
 
+# required to post an image to facebook
+from poster.encode import multipart_encode, MultipartParam
+from poster.streaminghttp import register_openers
+import urllib2
 
+register_openers()
 
 app = Flask(__name__)
 
 access_token = 'EAAPlE5lfeCwBADurnmtjJWiXFxZBImpdZAPTi1hb9ZAJzxhjoZBy2lfXMEmTBWLWZA6ytpXnTsSHvPJN9OD9wxaPdXmLDjehGI6DhSCpxqzQM240Wx645elKeB2TB2p7PCFB3nKTDwirclZCZBZAawFoIoRiuj5u3OLdUPk5ivnyjwZDZD'
 
+
+# @app.route('/assets/<path:path>')
+# def send_assets(path):
+#     return send_from_directory('assets', path)
 
 @app.route("/", methods=["GET"])
 def root():
@@ -62,12 +67,12 @@ def reply_with_selfie_drafts(recipient_id, img):
     badge.thumbnail(img.size)
 
     # pasting badge on bottom right edge
-    img.paste(badge, (img.size[0] - badge.size[0], img.size[1] - badge.size[1]), badge)
+    img.paste(badge,
+              (img.size[0] - badge.size[0], img.size[1] - badge.size[1]),
+              badge)
 
-    tempFileObj = NamedTemporaryFile(mode='w+b',suffix='jpg')
-    img.save(tempFileObj, img.format, quality=100)
-
-    tempFileObj.seek(0)
+    temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.jpg'
+    img.save(temp_img_path)
 
     params = {
         "access_token": access_token
@@ -78,13 +83,20 @@ def reply_with_selfie_drafts(recipient_id, img):
         "message[attachment][type]": "image",
         "message[attachment][payload][]": ""
     }
-    print "################# PRINTING SEND_IMAGE_DATA data"
+    items = []
 
+    for name, value in data.items():
+        items.append(MultipartParam(name, value))
+    items.append(MultipartParam.from_file("file", temp_filepath))
 
     url = "https://graph.facebook.com/v2.6/me/messages?" + urllib.urlencode(params)
-    r = requests.post(url=url, files={'filedata': tempFileObj.read()}, data=data)
 
-    print r.text
+    datagen, headers = multipart_encode(items)
+    request = urllib2.Request(url, datagen, headers)
+    print "#### REQUEST"
+    response = urllib2.urlopen(request)
+    print response.read()
+    os.remove(temp_filepath)
 
 def get_url(url):
     result = request.get(url)
@@ -153,21 +165,3 @@ def create_generic_template_element(title, image_url, subtitle):
         "image_url": image_url,
         "subtitle": subtitle
     }
-
-
-def pretty_print_POST(req):
-    """
-    At this point it is completely built and ready
-    to be fired; it is "prepared".
-
-    However pay attention at the formatting used in
-    this function because it is programmed to be pretty
-    printed and may differ from the actual request.
-    """
-    print('{}\n{}\n{}\n\n{}'.format(
-        '-----------START-----------',
-        req.method + ' ' + req.url,
-        '\n'.join('{}: {}'.format(k, v) for k, v in req.headers.items()),
-        req.body,
-    ))
-
