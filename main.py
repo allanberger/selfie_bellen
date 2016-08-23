@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json, urllib, requests, tempfile, os
+import json, urllib, requests, tempfile, os, uuid
 from flask import Flask, request, abort, send_from_directory
 from PIL import Image
 from StringIO import StringIO
@@ -117,7 +117,7 @@ def reply_with_selfie_drafts(recipient_id, img):
               badge)
 
     temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.jpg'
-    img.save(temp_img_path)
+    img.save(temp_filepath)
 
     params = {
         "access_token": access_token
