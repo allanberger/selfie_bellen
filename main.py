@@ -24,7 +24,7 @@ with open(DB_FILE) as data_file:
   user_db = json.load(data_file)
 
 TEMPLATES = [
-    "vdb_badge1", "vdb_badge2", "vdb_badge3",
+    "vdb_badge1", "vdb_badge2", "vdb_badge3", "vdb_badge4", "vdb_badge5"
 ]
 
 
@@ -98,7 +98,7 @@ def send_templates(recipient_id):
     for temp in TEMPLATES:
         templates.append(Element(
             title="Vorlage",
-            image_url=asset_url(temp + "_preview.jpg"),
+            image_url=asset_url(temp + "_preview.png"),
             subtitle="Vorlage",
             buttons=[Button({
                 "type": "postback",
@@ -117,7 +117,7 @@ def reply_with_selfie_drafts(recipient_id, img):
               (img.size[0] - badge.size[0], img.size[1] - badge.size[1]),
               badge)
 
-    temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.jpg'
+    temp_filepath = 'assets/selfie-' + str(uuid.uuid4()) + '.png'
     img.save(temp_filepath)
 
     params = {
